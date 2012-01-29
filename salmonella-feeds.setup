@@ -1,0 +1,10 @@
+;;; salmonella-feeds.setup -*- scheme -*-
+
+;; Compile the application
+(compile -S -O3 -d1 salmonella-feeds.scm -o salmonella-feeds)
+
+(define salmonella-feeds-version "1.0")
+
+(install-program 'salmonella-feeds
+                 '("salmonella-feeds")
+                 `((version ,salmonella-feeds-version)))
