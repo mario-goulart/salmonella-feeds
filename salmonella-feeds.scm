@@ -207,15 +207,19 @@
     ""))
 
 
-(define (write-custom-feeds! log-file custom-feeds-dir custom-feeds-web-dir feeds-server salmonella-report-uri)
+(define (write-custom-feeds! log-file custom-feeds-dir custom-feeds-web-dir custom-feeds-out-dir
+                             feeds-server salmonella-report-uri)
+  (unless (directory-exists? custom-feeds-out-dir)
+    (create-directory custom-feeds-out-dir 'with-parents))
   (let ((log (read-log-file log-file)))
     (for-each
      (lambda (custom-conf-file)
-       (with-output-to-file (make-pathname custom-feeds-dir
+       (with-output-to-file (make-pathname custom-feeds-out-dir
                                            (pathname-file custom-conf-file)
                                            "xml")
          (lambda ()
-           (custom-feed custom-conf-file log custom-feeds-dir custom-feeds-web-dir feeds-server salmonella-report-uri))))
+           (custom-feed custom-conf-file log custom-feeds-dir
+                        custom-feeds-web-dir feeds-server salmonella-report-uri))))
      (glob (make-pathname custom-feeds-dir "*.scm")))))
 
 
@@ -266,6 +270,9 @@
 --custom-feeds-dir=<dir>
   Directory where custom feeds can be read from (optional).
 
+--custom-feeds-out-dir=<dir>
+  Directory where custom feeds will be written to.
+
 --feeds-web-dir=<dir>
   The web directory (i.e., the directory which HTTP clients request) where
   feeds are located.
@@ -301,6 +308,7 @@ EOF
         (feeds-web-dir (or (cmd-line-arg '--feeds-web-dir args)
                            (die "Missing --feeds-web-dir=<dir>")))
         (custom-feeds-web-dir (cmd-line-arg '--custom-feeds-web-dir args))
+        (custom-feeds-out-dir (cmd-line-arg '--custom-feeds-out-dir args))
         (feeds-server (or (cmd-line-arg '--feeds-server args)
                           (die "Missing --feeds-server=<server address>")))
         (salmonella-report-uri
@@ -312,10 +320,11 @@ EOF
     (when custom-feeds-dir
       (create-dir custom-feeds-dir))
 
-    (when (and custom-feeds-dir custom-feeds-web-dir)
+    (when (and custom-feeds-dir custom-feeds-out-dir custom-feeds-web-dir)
       (write-custom-feeds! log-file
                            custom-feeds-dir
                            custom-feeds-web-dir
+                           custom-feeds-out-dir
                            feeds-server
                            salmonella-report-uri))
 
