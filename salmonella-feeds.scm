@@ -126,7 +126,9 @@
   (if (memq 'ignore-tests ignore)
       '()
       (let ((status (test-status egg log)))
-        (if (and status (zero? status))
+        (if (and status
+                 (or (eq? status -1)  ;; no test
+                     (zero? status))) ;; test ok
             '()
             (list
              (make-entry
