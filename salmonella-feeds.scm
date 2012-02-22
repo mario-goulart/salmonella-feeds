@@ -109,18 +109,17 @@
      (log-eggs log))))
 
 
-(define (custom-install-entry egg ignore log salmonella-report-uri)
-  (let ((status (install-status egg log)))
-    (if (and status (zero? status))
-        '()
-        (list
-         (make-entry
-          id: (feed-id egg 'custom-install)
-          title: (make-title
-                  (sprintf "~a's installation status: ~a" egg fail))
-          updated: (rfc3339-now)
-          published: (rfc3339-now)
-          links: (list (report-link egg "install" salmonella-report-uri)))))))
+(define (custom-install-entry egg status ignore log salmonella-report-uri)
+  (if (and status (zero? status))
+      '()
+      (list
+       (make-entry
+        id: (feed-id egg 'custom-install)
+        title: (make-title
+                (sprintf "~a's installation status: ~a" egg fail))
+        updated: (rfc3339-now)
+        published: (rfc3339-now)
+        links: (list (report-link egg "install" salmonella-report-uri))))))
 
 
 (define (custom-test-entry egg ignore log salmonella-report-uri)
@@ -197,11 +196,14 @@
                                (ignore (if (pair? egg/ignore)
                                            (cdr egg/ignore)
                                            '())))
-                           (append
-                            (custom-install-entry egg ignore log salmonella-report-uri)
-                            (custom-test-entry egg ignore log salmonella-report-uri)
-                            (custom-warnings-entry egg ignore log salmonella-report-uri)
-                            k)))
+                           (let ((status (install-status egg log)))
+                             (append
+                              (custom-install-entry egg status ignore log salmonella-report-uri)
+                              (if (and status (zero? status))
+                                  (custom-test-entry egg ignore log salmonella-report-uri)
+                                  '())
+                              (custom-warnings-entry egg ignore log salmonella-report-uri)
+                              k))))
                        '()
                        eggs))))))
     ""))
