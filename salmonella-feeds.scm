@@ -153,7 +153,7 @@
                 (make-entry
                  id: (feed-id egg (conc "custom-warning:" action))
                  title: (make-title
-                         (sprintf "Warning: ~a" (report-message entry)))
+                         (sprintf "Warning (~a): ~a" egg (report-message entry)))
                  updated: (rfc3339-now)
                  published: (rfc3339-now)
                  links: (list (make-link uri: salmonella-report-uri))))))
