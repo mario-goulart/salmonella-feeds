@@ -1,5 +1,9 @@
-(import irregex)
-(use atom rfc3339 ports files posix salmonella salmonella-log-parser setup-api)
+(module salmonella-feeds ()
+
+(import chicken scheme irregex)
+(use data-structures extras files ports posix setup-api srfi-1)
+(use rfc3339 salmonella salmonella-log-parser)
+(use (except atom feed-id))
 
 (define ok "[ok]")
 (define fail "[fail]")
@@ -337,3 +341,5 @@ EOF
                       feeds-web-dir
                       feeds-server
                       salmonella-report-uri)))
+
+) ; end module
