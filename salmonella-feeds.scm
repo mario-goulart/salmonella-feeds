@@ -1,8 +1,8 @@
 (module salmonella-feeds ()
 
 (import chicken scheme irregex)
-(use data-structures extras files ports posix setup-api srfi-1)
-(use rfc3339 salmonella salmonella-log-parser)
+(use data-structures extras files ports posix srfi-1)
+(use rfc3339 salmonella salmonella-log-parser salmonella-diff)
 (use (except atom feed-id))
 
 (define ok "[ok]")
@@ -230,6 +230,55 @@
                         custom-feeds-web-dir feeds-server salmonella-report-uri))))
      (glob (make-pathname custom-feeds-dir "*.scm")))))
 
+(define (diff-feed-content log-file diff-against report-uri diff-against-report-uri)
+  (sxml-diff->html
+   (append
+    '((link (@ (rel "stylesheet")
+               (href "http://wiki.call-cc.org/chicken.css")
+               (type "text/css"))))
+    (diff->sxml log-file diff-against #f
+                report-uri1: report-uri
+                report-uri2: diff-against-report-uri
+                write-index?: #f))
+   #f))
+
+(define (diff-feed log-file diff-against diff-feed-file-path diff-feed-web-file-path feeds-server report-uri diff-against-report-uri)
+  (write-atom-doc
+   (make-atom-doc
+    (make-feed
+     title: (make-title "Salmonella diff feed")
+     authors: (list (make-author name: "salmonella-feeds"))
+     updated: (rfc3339-now)
+     id: (feed-id 'diff 'diff)
+     links: (list (make-link
+                   uri: (make-pathname feeds-server diff-feed-web-file-path)))
+     generator: (make-generator
+                 "salmonella-feeds"
+                 uri: "http://wiki.call-cc.org/egg/salmonella-feeds")
+     entries: (list
+               (make-entry
+                id: (feed-id 'diff 'diff-entry)
+                summary: (make-summary "Salmonella diff")
+                title: (make-title "Salmonella diff feed")
+                updated: (rfc3339-now)
+                published: (rfc3339-now)
+                content: (make-content (diff-feed-content log-file diff-against report-uri diff-against-report-uri)
+                                       type: 'html)))))))
+
+(define (write-diff-feed! log-file diff-against diff-file-path diff-feed-web-file-path feeds-server report-uri diff-against-report-uri)
+  (let ((dir (pathname-directory diff-file-path)))
+    (unless (directory-exists? dir)
+      (create-directory dir 'with-parents))
+    (with-output-to-file diff-file-path
+      (lambda ()
+        (diff-feed log-file
+                   diff-against
+                   diff-file-path
+                   diff-feed-web-file-path
+                   feeds-server
+                   report-uri
+                   diff-against-report-uri)))))
+
 
 (define (cmd-line-arg option args)
   ;; Returns the argument associated to the command line option OPTION
@@ -251,16 +300,6 @@
       (flush-output)))
   (exit 1))
 
-
-(define (create-dir dir)
-  (unless (directory-exists? dir)
-    (when (file-exists? dir)
-      (die dir " is a file."))
-    (parameterize ((setup-verbose-mode #f)
-                   (run-verbose #f))
-      (create-directory/parents dir))))
-
-
 (define (usage #!optional exit-code)
   (let ((this (pathname-strip-directory (program-name))))
     (display #<#EOF
@@ -271,6 +310,12 @@
 
 --log-file=<file>
   The salmonella log file.
+
+--feeds-server=<server address>
+  Feeds server address (e.g., "http://tests.call-cc.org")
+
+--salmonella-report-uri=<URI>
+  URI where the salmonella report is located.
 
 --feeds-dir=<dir>
   Directory where to write feed files.
@@ -289,11 +334,18 @@
   The web directory (i.e., the directory which HTTP clients request) where
   custom feeds are located.
 
---feeds-server=<server address>
-  Feeds server address (e.g., "http://tests.call-cc.org")
+--diff-against=<file>
+  <file> is the salmonella log file to check differences against.
 
---salmonella-report-uri=<URI>
-  The URI where salmonella reports can be located.
+--diff-feed-file-path=<file>
+  Path to the file where the diff feed will be written to.
+
+--diff-feed-web-file-path=<file>
+  Web path to the diff feed file.
+
+--diff-against-report-uri=<URI>
+  URI where the "diff against" salmonella report is located.
+
 EOF
 )
     (newline)
@@ -317,16 +369,24 @@ EOF
                            (die "Missing --feeds-web-dir=<dir>")))
         (custom-feeds-web-dir (cmd-line-arg '--custom-feeds-web-dir args))
         (custom-feeds-out-dir (cmd-line-arg '--custom-feeds-out-dir args))
+        (diff-against (cmd-line-arg '--diff-against args))
+        (diff-feed-file-path (cmd-line-arg '--diff-feed-file-path args))
+        (diff-feed-web-file-path (cmd-line-arg '--diff-feed-web-file-path args))
         (feeds-server (or (cmd-line-arg '--feeds-server args)
                           (die "Missing --feeds-server=<server address>")))
         (salmonella-report-uri
          (or (cmd-line-arg '--salmonella-report-uri args)
-             (die "Missing --salmonella-report-uri=<URI>"))))
+             (die "Missing --salmonella-report-uri=<URI>")))
+        (diff-against-report-uri ;; FIXME check if mandatory when creating diff feed
+         (cmd-line-arg '--diff-against-report-uri args)))
 
-    (create-dir feeds-dir)
+    (create-directory feeds-dir 'with-parents)
 
     (when custom-feeds-dir
-      (create-dir custom-feeds-dir))
+      (create-directory custom-feeds-dir 'with-parents))
+
+    (when diff-against
+      (create-directory (pathname-directory diff-feed-file-path) 'with-parents))
 
     (when (and custom-feeds-dir custom-feeds-out-dir custom-feeds-web-dir)
       (write-custom-feeds! log-file
@@ -340,6 +400,15 @@ EOF
                       feeds-dir
                       feeds-web-dir
                       feeds-server
-                      salmonella-report-uri)))
+                      salmonella-report-uri)
+
+    (write-diff-feed! log-file
+                      diff-against
+                      diff-feed-file-path
+                      diff-feed-web-file-path
+                      feeds-server
+                      salmonella-report-uri
+                      diff-against-report-uri)
+    ))
 
 ) ; end module
