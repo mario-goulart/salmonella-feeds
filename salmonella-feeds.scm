@@ -238,8 +238,7 @@
                (type "text/css"))))
     (diff->sxml log-file diff-against #f
                 report-uri1: report-uri
-                report-uri2: diff-against-report-uri
-                write-index?: #f))
+                report-uri2: diff-against-report-uri))
    #f))
 
 (define (diff-feed log-file diff-against diff-feed-file-path diff-feed-web-file-path feeds-server report-uri diff-against-report-uri)
