@@ -376,7 +376,7 @@ EOF
         (salmonella-report-uri
          (or (cmd-line-arg '--salmonella-report-uri args)
              (die "Missing --salmonella-report-uri=<URI>")))
-        (diff-against-report-uri ;; FIXME check if mandatory when creating diff feed
+        (diff-against-report-uri
          (cmd-line-arg '--diff-against-report-uri args)))
 
     (create-directory feeds-dir 'with-parents)
@@ -385,7 +385,13 @@ EOF
       (create-directory custom-feeds-dir 'with-parents))
 
     (when diff-against
-      (create-directory (pathname-directory diff-feed-file-path) 'with-parents))
+      (create-directory (pathname-directory diff-feed-file-path) 'with-parents)
+      (unless diff-feed-file-path
+        (die "Missing --diff-feed-file-path=<file path>"))
+      (unless diff-feed-web-file-path
+        (die "Missing --diff-feed-web-file-path=<web path>"))
+      (unless diff-against-report-uri
+        (die "Missing --diff-against-report-uri=<uri>")))
 
     (when (and custom-feeds-dir custom-feeds-out-dir custom-feeds-web-dir)
       (write-custom-feeds! log-file
