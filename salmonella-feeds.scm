@@ -407,13 +407,14 @@ EOF
                       feeds-server
                       salmonella-report-uri)
 
-    (write-diff-feed! log-file
-                      diff-against
-                      diff-feed-file-path
-                      diff-feed-web-file-path
-                      feeds-server
-                      salmonella-report-uri
-                      diff-against-report-uri)
+    (when diff-against
+      (write-diff-feed! log-file
+                        diff-against
+                        diff-feed-file-path
+                        diff-feed-web-file-path
+                        feeds-server
+                        salmonella-report-uri
+                        diff-against-report-uri))
     ))
 
 ) ; end module
