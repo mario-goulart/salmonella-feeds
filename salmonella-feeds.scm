@@ -230,7 +230,8 @@
                         custom-feeds-web-dir feeds-server salmonella-report-uri))))
      (glob (make-pathname custom-feeds-dir "*.scm")))))
 
-(define (diff-feed-content log-file diff-against report-uri diff-against-report-uri)
+(define (diff-feed-content log-file diff-against report-uri
+                           diff-against-report-uri diff-label1 diff-label2)
   (sxml-diff->html
    (append
     '((link (@ (rel "stylesheet")
@@ -238,10 +239,14 @@
                (type "text/css"))))
     (diff->sxml log-file diff-against #f
                 report-uri1: report-uri
-                report-uri2: diff-against-report-uri))
+                report-uri2: diff-against-report-uri
+                label1: diff-label1
+                label2: diff-label2))
    #f))
 
-(define (diff-feed log-file diff-against diff-feed-file-path diff-feed-web-file-path feeds-server report-uri diff-against-report-uri)
+(define (diff-feed log-file diff-against diff-feed-file-path
+                   diff-feed-web-file-path feeds-server report-uri
+                   diff-against-report-uri diff-label1 diff-label2)
   (write-atom-doc
    (make-atom-doc
     (make-feed
@@ -261,10 +266,17 @@
                 title: (make-title "Salmonella diff feed")
                 updated: (rfc3339-now)
                 published: (rfc3339-now)
-                content: (make-content (diff-feed-content log-file diff-against report-uri diff-against-report-uri)
+                content: (make-content (diff-feed-content log-file
+                                                          diff-against
+                                                          report-uri
+                                                          diff-against-report-uri
+                                                          diff-label1
+                                                          diff-label2)
                                        type: 'html)))))))
 
-(define (write-diff-feed! log-file diff-against diff-file-path diff-feed-web-file-path feeds-server report-uri diff-against-report-uri)
+(define (write-diff-feed! log-file diff-against diff-file-path
+                          diff-feed-web-file-path feeds-server report-uri
+                          diff-against-report-uri diff-label1 diff-label2)
   (let ((dir (pathname-directory diff-file-path)))
     (unless (directory-exists? dir)
       (create-directory dir 'with-parents))
@@ -276,7 +288,9 @@
                    diff-feed-web-file-path
                    feeds-server
                    report-uri
-                   diff-against-report-uri)))))
+                   diff-against-report-uri
+                   diff-label1
+                   diff-label2)))))
 
 
 (define (cmd-line-arg option args)
@@ -345,6 +359,11 @@
 --diff-against-report-uri=<URI>
   URI where the "diff against" salmonella report is located.
 
+--diff-label1=<label>
+  Label corresponding to the log file specified by the --log-file option.
+
+--diff-label2=<label>
+  Label corresponding to the log file specified by the --diff-against option.
 EOF
 )
     (newline)
@@ -371,6 +390,8 @@ EOF
         (diff-against (cmd-line-arg '--diff-against args))
         (diff-feed-file-path (cmd-line-arg '--diff-feed-file-path args))
         (diff-feed-web-file-path (cmd-line-arg '--diff-feed-web-file-path args))
+        (diff-label1 (cmd-line-arg '--diff-label1 args))
+        (diff-label2 (cmd-line-arg '--diff-label2 args))
         (feeds-server (or (cmd-line-arg '--feeds-server args)
                           (die "Missing --feeds-server=<server address>")))
         (salmonella-report-uri
@@ -414,7 +435,9 @@ EOF
                         diff-feed-web-file-path
                         feeds-server
                         salmonella-report-uri
-                        diff-against-report-uri))
+                        diff-against-report-uri
+                        diff-label1
+                        diff-label2))
     ))
 
 ) ; end module
