@@ -237,9 +237,9 @@
     '((link (@ (rel "stylesheet")
                (href "http://wiki.call-cc.org/chicken.css")
                (type "text/css"))))
-    (diff->sxml log-file diff-against #f
-                report-uri1: report-uri
-                report-uri2: diff-against-report-uri
+    (diff->sxml diff-against log-file #f
+                report-uri1: diff-against-report-uri
+                report-uri2: report-uri
                 label1: diff-label1
                 label2: diff-label2))
    #f))
