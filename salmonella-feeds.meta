@@ -3,7 +3,8 @@
  (author "Mario Domenech Goulart")
  (license "BSD")
  (category egg-tools)
- (doc-from-wiki)
- (egg "salmonella-feeds.egg")
- (depends atom rfc3339 salmonella (salmonella-diff "1.1"))
+ (depends atom
+          rfc3339
+          salmonella
+          (salmonella-diff "1.1"))
  )
