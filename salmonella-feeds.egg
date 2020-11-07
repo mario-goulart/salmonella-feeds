@@ -1,0 +1,14 @@
+;;; salmonella-feeds.egg -*- scheme -*-
+
+((synopsis "A tool to generate atom feeds out of salmonella log files")
+ (author "Mario Domenech Goulart")
+ (license "BSD")
+ (category egg-tools)
+ (dependencies atom
+               rfc3339
+               salmonella
+               (salmonella-diff "1.1")
+               srfi-1)
+ (component-options
+  (csc-options "-O3" "-d1"))
+ (components (program salmonella-feeds)))

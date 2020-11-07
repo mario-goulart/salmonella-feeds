@@ -1,9 +1,30 @@
 (module salmonella-feeds ()
 
-(import chicken scheme irregex)
-(use data-structures extras files ports posix srfi-1)
-(use rfc3339 salmonella salmonella-log-parser salmonella-diff)
-(use (except atom feed-id))
+(import scheme)
+(cond-expand
+  (chicken-4
+   (import chicken)
+   (use data-structures extras files irregex ports posix srfi-1)
+   (use rfc3339 salmonella salmonella-log-parser salmonella-diff)
+   (use (except atom feed-id))
+   (define read-list read-file))
+  (chicken-5
+   (import (chicken base)
+           (chicken condition)
+           (chicken file)
+           (chicken format)
+           (chicken io)
+           (chicken irregex)
+           (chicken pathname)
+           (chicken port)
+           (chicken process-context)
+           (chicken string)
+           (chicken time)
+           (chicken time.posix))
+   (import rfc3339 salmonella salmonella-log-parser salmonella-diff srfi-1)
+   (import (except atom feed-id)))
+  (else
+   (error "Unsupported CHICKEN version.")))
 
 (define ok "[ok]")
 (define fail "[fail]")
@@ -167,7 +188,7 @@
 (define (custom-feed custom-conf-file log custom-feeds-dir custom-feeds-web-dir feeds-server salmonella-report-uri)
   (let ((config-data (handle-exceptions exn
                        #f
-                       (read-file custom-conf-file))))
+                       (with-input-from-file custom-conf-file read-list))))
     (if (and config-data (not (null? config-data)))
         (let ((title (and-let* ((value (alist-ref 'title config-data)))
                        (car value)))
