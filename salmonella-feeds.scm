@@ -188,12 +188,14 @@
 (define (custom-feed custom-conf-file log custom-feeds-dir custom-feeds-web-dir feeds-server salmonella-report-uri)
   (let ((config-data (handle-exceptions exn
                        #f
-                       (with-input-from-file custom-conf-file read-list))))
+                       (with-input-from-file custom-conf-file read-list)))
+        (skipped-eggs (log-skipped-eggs log)))
     (if (and config-data (not (null? config-data)))
         (let ((title (and-let* ((value (alist-ref 'title config-data)))
                        (car value)))
               (eggs (filter-map (lambda (config-item)
                                   (and (eq? (car config-item) 'egg)
+                                       (not (memq (cadr config-item) skipped-eggs))
                                        (cdr config-item)))
                                 config-data))
               (custom-file (pathname-file custom-conf-file)))
