@@ -238,8 +238,7 @@
 
 (define (write-custom-feeds! log-file custom-feeds-dir custom-feeds-web-dir custom-feeds-out-dir
                              feeds-server salmonella-report-uri)
-  (unless (directory-exists? custom-feeds-out-dir)
-    (create-directory custom-feeds-out-dir 'with-parents))
+  (create-directory custom-feeds-out-dir 'with-parents)
   (let ((log (read-log-file log-file)))
     (for-each
      (lambda (custom-conf-file)
